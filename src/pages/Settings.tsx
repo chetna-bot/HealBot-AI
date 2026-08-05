@@ -4,6 +4,24 @@ import { translations } from '../translations';
 import { User, Heart, Lock, LogOut, Globe, Bell, Moon, Shield, Trash2, ChevronRight, Download, Loader2 } from 'lucide-react';
 import { motion } from 'motion/react';
 
+const SettingItem = ({ icon: Icon, title, subtitle, onClick, color, danger, loading }: any) => (
+  <div 
+    onClick={loading ? undefined : onClick}
+    className={`p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer group ${danger ? 'hover:bg-red-50 dark:hover:bg-red-900/20' : ''} ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
+  >
+    <div className="flex items-center gap-4">
+      <div className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 ${color}`}>
+        <Icon size={20} className={loading ? 'animate-spin' : ''} />
+      </div>
+      <div>
+        <p className={`font-bold ${danger ? 'text-red-600 dark:text-red-400' : 'text-slate-800 dark:text-white'}`}>{title}</p>
+        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">{subtitle}</p>
+      </div>
+    </div>
+    <ChevronRight size={18} className="text-slate-300 dark:text-slate-600 group-hover:text-slate-400 dark:group-hover:text-slate-500 group-hover:translate-x-1 transition-all" />
+  </div>
+);
+
 export const Settings: React.FC = () => {
   const { language, setLanguage, logout, user, theme, setTheme, updateProfile } = useAuth();
   const t = translations[language];
@@ -39,24 +57,6 @@ export const Settings: React.FC = () => {
       setIsExporting(false);
     }
   };
-
-  const SettingItem = ({ icon: Icon, title, subtitle, onClick, color, danger, loading }: any) => (
-    <div 
-      onClick={loading ? undefined : onClick}
-      className={`p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer group ${danger ? 'hover:bg-red-50 dark:hover:bg-red-900/20' : ''} ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
-    >
-      <div className="flex items-center gap-4">
-        <div className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 ${color}`}>
-          <Icon size={20} className={loading ? 'animate-spin' : ''} />
-        </div>
-        <div>
-          <p className={`font-bold ${danger ? 'text-red-600 dark:text-red-400' : 'text-slate-800 dark:text-white'}`}>{title}</p>
-          <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">{subtitle}</p>
-        </div>
-      </div>
-      <ChevronRight size={18} className="text-slate-300 dark:text-slate-600 group-hover:text-slate-400 dark:group-hover:text-slate-500 group-hover:translate-x-1 transition-all" />
-    </div>
-  );
 
   return (
     <div className="max-w-2xl mx-auto space-y-6 pb-12">

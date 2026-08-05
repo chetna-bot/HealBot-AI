@@ -223,9 +223,10 @@ export const HealBot: React.FC = () => {
       );
       const botMessage: Message = { role: 'model', parts: [{ text: responseText || 'Sorry, I could not process that.' }] };
       setMessages(prev => [...prev, botMessage]);
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      const errorMessage: Message = { role: 'model', parts: [{ text: 'Error: Unable to connect to AI service.' }] };
+      const errText = error?.message ? `Error: ${error.message}` : 'Error: Unable to connect to AI service.';
+      const errorMessage: Message = { role: 'model', parts: [{ text: errText }] };
       setMessages(prev => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);

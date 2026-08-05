@@ -1,6 +1,4 @@
-import { GoogleGenAI, Type } from "@google/genai";
-
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "";
+import { GoogleGenAI } from "@google/genai";
 
 export interface ImagePart {
   inlineData: {
@@ -9,18 +7,52 @@ export interface ImagePart {
   };
 }
 
+const getClientApiKey = (): string => {
+  if (typeof process !== "undefined" && process.env?.GEMINI_API_KEY) {
+    return process.env.GEMINI_API_KEY;
+  }
+  if (typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_GEMINI_API_KEY) {
+    return (import.meta as any).env.VITE_GEMINI_API_KEY;
+  }
+  return "";
+};
+
 export const getGeminiResponse = async (
   prompt: string, 
   history: { role: "user" | "model"; parts: { text?: string; inlineData?: any }[] }[], 
   systemInstruction: string,
   images?: ImagePart[]
-) => {
-  if (!GEMINI_API_KEY) {
-    throw new Error("Gemini API key is not configured.");
+): Promise<string> => {
+  // 1. Try server API route
+  try {
+    const res = await fetch("/api/gemini/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt, history, systemInstruction, images })
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      if (data.text) return data.text;
+      if (data.error) throw new Error(data.error);
+    } else {
+      const errData = await res.json().catch(() => ({}));
+      if (errData.error) throw new Error(errData.error);
+    }
+  } catch (err: any) {
+    if (err.message && err.message.includes("Gemini API key is not configured")) {
+      throw err;
+    }
+    console.warn("Server API call failed, attempting client-side fallback...", err);
   }
 
-  const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
-  
+  // 2. Client-side fallback if client API key exists
+  const apiKey = getClientApiKey();
+  if (!apiKey) {
+    throw new Error("Gemini API key is not configured on the server or client.");
+  }
+
+  const ai = new GoogleGenAI({ apiKey });
   const userParts: any[] = [{ text: prompt }];
   if (images && images.length > 0) {
     userParts.push(...images);
@@ -34,48 +66,75 @@ export const getGeminiResponse = async (
     ],
     config: {
       systemInstruction: systemInstruction + "\n\nCRITICAL: Use Google Search to verify any medical information or facts. Prioritize accuracy and grounding. If you are unsure, state it clearly.",
-      temperature: 0.1, // Lower temperature for more factual responses
+      temperature: 0.1,
       tools: [{ googleSearch: {} }]
     }
   });
 
-  return response.text;
+  return response.text || "";
 };
 
 export const searchHospitals = async (city: string, images?: ImagePart[]) => {
-  if (!GEMINI_API_KEY) {
-    throw new Error("Gemini API key is not configured.");
+  // 1. Try server API route
+  try {
+    const res = await fetch("/api/gemini/hospitals", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ city, images })
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      if (data.text !== undefined) {
+        return {
+          text: data.text,
+          groundingChunks: data.groundingChunks || []
+        };
+      }
+      if (data.error) throw new Error(data.error);
+    } else {
+      const errData = await res.json().catch(() => ({}));
+      if (errData.error) throw new Error(errData.error);
+    }
+  } catch (err: any) {
+    if (err.message && err.message.includes("Gemini API key is not configured")) {
+      throw err;
+    }
+    console.warn("Server API call failed, attempting client-side fallback...", err);
   }
 
-  const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
-  
+  // 2. Client-side fallback if client API key exists
+  const apiKey = getClientApiKey();
+  if (!apiKey) {
+    throw new Error("Gemini API key is not configured on the server or client.");
+  }
+
+  const ai = new GoogleGenAI({ apiKey });
   let prompt = `Find a list of well-known, established, and registered hospitals in ${city}. 
-  CRITICAL: Do NOT include any "Unknown" hospitals or institutions with missing names. ONLY include hospitals that are clearly identified and verified.
-  Prioritize hospitals that are Government Registered, NABH Accredited, or JCI Accredited. 
-  For each hospital, provide:
-  - Full Name
-  - Address
-  - Contact details
-  - Actual Rating (out of 5 stars from Google)
-  - Total number of reviews
-  - Accreditation status (e.g., NABH, JCI, Government Registered)
-  - A very brief summary of user reviews (one sentence)
-  
-  Use the following strict format for each entry in your response text to ensure reliability:
-  [Hospital: Name]
-  [Rating: X.X]
-  [Reviews: Count]
-  [Accreditation: Status]
-  [Summary: Review summary]
-  [Maps: URL]
-  [Address: Full address]
-  
-  Only include hospitals that are verified medical institutions. Avoid small unverified private clinics or entries with "Unknown" details.`;
+CRITICAL: Do NOT include any "Unknown" hospitals or institutions with missing names. ONLY include hospitals that are clearly identified and verified.
+Prioritize hospitals that are Government Registered, NABH Accredited, or JCI Accredited. 
+For each hospital, provide:
+- Full Name
+- Address
+- Contact details
+- Actual Rating (out of 5 stars from Google)
+- Total number of reviews
+- Accreditation status (e.g., NABH, JCI, Government Registered)
+- A very brief summary of user reviews (one sentence)
+
+Use the following strict format for each entry in your response text to ensure reliability:
+[Hospital: Name]
+[Rating: X.X]
+[Reviews: Count]
+[Accreditation: Status]
+[Summary: Review summary]
+[Maps: URL]
+[Address: Full address]
+
+Only include hospitals that are verified medical institutions. Avoid small unverified private clinics or entries with "Unknown" details.`;
   let tool: any = { googleMaps: {} };
 
   if (images && images.length > 0) {
-    // If images are present, we use googleSearch for better medical identification
-    // and ask it to find hospitals as well.
     tool = { googleSearch: {} };
     prompt = `
       You are a medical imaging expert. Analyze the attached medical images/videos with extreme precision.
@@ -114,7 +173,7 @@ export const searchHospitals = async (city: string, images?: ImagePart[]) => {
   }
 
   const response = await ai.models.generateContent({
-    model: "gemini-3-flash-preview", // Switch to Flash for better performance
+    model: "gemini-3-flash-preview",
     contents: [{ role: "user", parts: userParts }],
     config: {
       tools: [tool],
@@ -129,13 +188,37 @@ export const searchHospitals = async (city: string, images?: ImagePart[]) => {
   };
 };
 
-export const analyzeMedicalReport = async (fileData: string, mimeType: string) => {
-  if (!GEMINI_API_KEY) {
-    throw new Error("Gemini API key is not configured.");
+export const analyzeMedicalReport = async (fileData: string, mimeType: string): Promise<string> => {
+  // 1. Try server API route
+  try {
+    const res = await fetch("/api/gemini/analyze-report", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ fileData, mimeType })
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      if (data.text) return data.text;
+      if (data.error) throw new Error(data.error);
+    } else {
+      const errData = await res.json().catch(() => ({}));
+      if (errData.error) throw new Error(errData.error);
+    }
+  } catch (err: any) {
+    if (err.message && err.message.includes("Gemini API key is not configured")) {
+      throw err;
+    }
+    console.warn("Server API call failed, attempting client-side fallback...", err);
   }
 
-  const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
-  
+  // 2. Client-side fallback if client API key exists
+  const apiKey = getClientApiKey();
+  if (!apiKey) {
+    throw new Error("Gemini API key is not configured on the server or client.");
+  }
+
+  const ai = new GoogleGenAI({ apiKey });
   const prompt = `
     You are a strict Medical Document Retrieval and Grounding Specialist. Your task is to extract information from the provided medical report with ZERO hallucination.
     
@@ -181,16 +264,16 @@ export const analyzeMedicalReport = async (fileData: string, mimeType: string) =
         { text: prompt },
         { 
           inlineData: {
-            data: fileData, // base64 encoded data
+            data: fileData,
             mimeType: mimeType
           } 
         }
       ] 
     }],
     config: {
-      temperature: 0.0, // Set to 0 for deterministic/literal extraction
+      temperature: 0.0,
     }
   });
 
-  return response.text;
+  return response.text || "";
 };

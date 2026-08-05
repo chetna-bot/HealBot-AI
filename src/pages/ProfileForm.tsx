@@ -4,6 +4,16 @@ import { translations } from '../translations';
 import { motion, AnimatePresence } from 'motion/react';
 import { User, Calendar, Droplets, Heart, ShieldAlert, Pill, Save, Sparkles } from 'lucide-react';
 
+const InputWrapper = ({ icon: Icon, label, children }: any) => (
+  <div className="space-y-2">
+    <label className="flex items-center gap-2 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">
+      <Icon size={14} className="text-blue-500" />
+      {label}
+    </label>
+    {children}
+  </div>
+);
+
 export const ProfileForm: React.FC = () => {
   const { user, updateProfile, language } = useAuth();
   const t = translations[language];
@@ -35,16 +45,6 @@ export const ProfileForm: React.FC = () => {
     setStep(step - 1);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
-
-  const InputWrapper = ({ icon: Icon, label, children }: any) => (
-    <div className="space-y-2">
-      <label className="flex items-center gap-2 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">
-        <Icon size={14} className="text-blue-500" />
-        {label}
-      </label>
-      {children}
-    </div>
-  );
 
   const progress = (step / 3) * 100;
 
