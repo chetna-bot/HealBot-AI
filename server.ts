@@ -76,7 +76,7 @@ app.use((req, res, next) => {
 
 // Helper to get Gemini API key safely
 function getGeminiApiKey() {
-  return process.env.GEMINI_API_KEY || "";
+  return process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || "";
 }
 
 // ==========================================
@@ -88,7 +88,7 @@ app.post("/api/gemini/chat", async (req, res) => {
   try {
     const apiKey = getGeminiApiKey();
     if (!apiKey) {
-      return res.status(500).json({ error: "Gemini API key is not configured on the server." });
+      return res.status(500).json({ error: "Gemini API key is not configured. Please set GEMINI_API_KEY in your Vercel Project Settings (Settings -> Environment Variables) or in your .env file." });
     }
 
     const { prompt, history = [], systemInstruction = "", images = [] } = req.body;
@@ -124,7 +124,7 @@ app.post("/api/gemini/hospitals", async (req, res) => {
   try {
     const apiKey = getGeminiApiKey();
     if (!apiKey) {
-      return res.status(500).json({ error: "Gemini API key is not configured on the server." });
+      return res.status(500).json({ error: "Gemini API key is not configured. Please set GEMINI_API_KEY in your Vercel Project Settings (Settings -> Environment Variables) or in your .env file." });
     }
 
     const { city, images = [] } = req.body;
@@ -217,7 +217,7 @@ app.post("/api/gemini/analyze-report", async (req, res) => {
   try {
     const apiKey = getGeminiApiKey();
     if (!apiKey) {
-      return res.status(500).json({ error: "Gemini API key is not configured on the server." });
+      return res.status(500).json({ error: "Gemini API key is not configured. Please set GEMINI_API_KEY in your Vercel Project Settings (Settings -> Environment Variables) or in your .env file." });
     }
 
     const { fileData, mimeType } = req.body;

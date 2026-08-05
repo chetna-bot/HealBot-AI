@@ -35,6 +35,7 @@ export const ReportAnalyzer: React.FC = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [currentAnalysis, setCurrentAnalysis] = useState<string | null>(null);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
   const [viewingReport, setViewingReport] = useState<MedicalReport | null>(null);
 
@@ -58,7 +59,20 @@ export const ReportAnalyzer: React.FC = () => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setSelectedFile(e.target.files[0]);
+      setAnalysisError(null);
     }
+  };
+
+  const getMimeType = (file: File): string => {
+    if (file.type && file.type !== 'application/octet-stream') {
+      return file.type;
+    }
+    const ext = file.name.split('.').pop()?.toLowerCase();
+    if (ext === 'pdf') return 'application/pdf';
+    if (ext === 'png') return 'image/png';
+    if (ext === 'webp') return 'image/webp';
+    if (ext === 'jpg' || ext === 'jpeg') return 'image/jpeg';
+    return file.type || 'image/jpeg';
   };
 
   const fileToBase64 = (file: File): Promise<string> => {
@@ -78,10 +92,12 @@ export const ReportAnalyzer: React.FC = () => {
 
     setIsAnalyzing(true);
     setCurrentAnalysis(null);
+    setAnalysisError(null);
 
     try {
       const base64 = await fileToBase64(selectedFile);
-      const analysisText = await analyzeMedicalReport(base64, selectedFile.type);
+      const mimeType = getMimeType(selectedFile);
+      const analysisText = await analyzeMedicalReport(base64, mimeType);
       setCurrentAnalysis(analysisText);
 
       // Save to database
@@ -91,7 +107,7 @@ export const ReportAnalyzer: React.FC = () => {
         body: JSON.stringify({
           userEmail: user.email,
           reportName: selectedFile.name,
-          reportType: selectedFile.type.startsWith('image/') ? 'Image' : 'PDF',
+          reportType: mimeType.startsWith('image/') ? 'Image' : 'PDF',
           analysis: analysisText,
           metadata: { size: selectedFile.size, lastModified: selectedFile.lastModified }
         })
@@ -99,9 +115,9 @@ export const ReportAnalyzer: React.FC = () => {
 
       fetchReports();
       setSelectedFile(null);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Analysis error:', err);
-      alert('Failed to analyze report. Please ensure the file is a clear photo or PDF.');
+      setAnalysisError(err?.message || 'Failed to analyze report. Please ensure the file is a clear photo or PDF.');
     } finally {
       setIsAnalyzing(false);
     }
@@ -194,6 +210,20 @@ export const ReportAnalyzer: React.FC = () => {
                   />
                 </div>
               </div>
+            )}
+
+            {analysisError && (
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl flex items-start gap-3 text-red-700 dark:text-red-400 text-sm"
+              >
+                <AlertCircle className="shrink-0 mt-0.5" size={20} />
+                <div className="space-y-1">
+                  <p className="font-bold">Analysis Failed</p>
+                  <p>{analysisError}</p>
+                </div>
+              </motion.div>
             )}
           </section>
 

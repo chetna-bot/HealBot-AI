@@ -11,11 +11,15 @@ const getClientApiKey = (): string => {
   if (typeof process !== "undefined" && process.env?.GEMINI_API_KEY) {
     return process.env.GEMINI_API_KEY;
   }
-  if (typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_GEMINI_API_KEY) {
-    return (import.meta as any).env.VITE_GEMINI_API_KEY;
+  if (typeof import.meta !== "undefined") {
+    const metaEnv = (import.meta as any).env;
+    if (metaEnv?.VITE_GEMINI_API_KEY) return metaEnv.VITE_GEMINI_API_KEY;
+    if (metaEnv?.GEMINI_API_KEY) return metaEnv.GEMINI_API_KEY;
   }
   return "";
 };
+
+const MISSING_KEY_ERROR = "Gemini API key is not configured. If deployed on Vercel, please add GEMINI_API_KEY in Vercel Project Settings > Environment Variables.";
 
 export const getGeminiResponse = async (
   prompt: string, 
@@ -23,6 +27,7 @@ export const getGeminiResponse = async (
   systemInstruction: string,
   images?: ImagePart[]
 ): Promise<string> => {
+  let serverError = "";
   // 1. Try server API route
   try {
     const res = await fetch("/api/gemini/chat", {
@@ -37,19 +42,19 @@ export const getGeminiResponse = async (
       if (data.error) throw new Error(data.error);
     } else {
       const errData = await res.json().catch(() => ({}));
-      if (errData.error) throw new Error(errData.error);
+      if (errData.error) {
+        serverError = errData.error;
+      }
     }
   } catch (err: any) {
-    if (err.message && err.message.includes("Gemini API key is not configured")) {
-      throw err;
-    }
     console.warn("Server API call failed, attempting client-side fallback...", err);
+    if (err.message) serverError = err.message;
   }
 
   // 2. Client-side fallback if client API key exists
   const apiKey = getClientApiKey();
   if (!apiKey) {
-    throw new Error("Gemini API key is not configured on the server or client.");
+    throw new Error(serverError || MISSING_KEY_ERROR);
   }
 
   const ai = new GoogleGenAI({ apiKey });
@@ -75,6 +80,7 @@ export const getGeminiResponse = async (
 };
 
 export const searchHospitals = async (city: string, images?: ImagePart[]) => {
+  let serverError = "";
   // 1. Try server API route
   try {
     const res = await fetch("/api/gemini/hospitals", {
@@ -94,19 +100,17 @@ export const searchHospitals = async (city: string, images?: ImagePart[]) => {
       if (data.error) throw new Error(data.error);
     } else {
       const errData = await res.json().catch(() => ({}));
-      if (errData.error) throw new Error(errData.error);
+      if (errData.error) serverError = errData.error;
     }
   } catch (err: any) {
-    if (err.message && err.message.includes("Gemini API key is not configured")) {
-      throw err;
-    }
     console.warn("Server API call failed, attempting client-side fallback...", err);
+    if (err.message) serverError = err.message;
   }
 
   // 2. Client-side fallback if client API key exists
   const apiKey = getClientApiKey();
   if (!apiKey) {
-    throw new Error("Gemini API key is not configured on the server or client.");
+    throw new Error(serverError || MISSING_KEY_ERROR);
   }
 
   const ai = new GoogleGenAI({ apiKey });
@@ -189,6 +193,7 @@ Only include hospitals that are verified medical institutions. Avoid small unver
 };
 
 export const analyzeMedicalReport = async (fileData: string, mimeType: string): Promise<string> => {
+  let serverError = "";
   // 1. Try server API route
   try {
     const res = await fetch("/api/gemini/analyze-report", {
@@ -203,19 +208,17 @@ export const analyzeMedicalReport = async (fileData: string, mimeType: string): 
       if (data.error) throw new Error(data.error);
     } else {
       const errData = await res.json().catch(() => ({}));
-      if (errData.error) throw new Error(errData.error);
+      if (errData.error) serverError = errData.error;
     }
   } catch (err: any) {
-    if (err.message && err.message.includes("Gemini API key is not configured")) {
-      throw err;
-    }
     console.warn("Server API call failed, attempting client-side fallback...", err);
+    if (err.message) serverError = err.message;
   }
 
   // 2. Client-side fallback if client API key exists
   const apiKey = getClientApiKey();
   if (!apiKey) {
-    throw new Error("Gemini API key is not configured on the server or client.");
+    throw new Error(serverError || MISSING_KEY_ERROR);
   }
 
   const ai = new GoogleGenAI({ apiKey });
