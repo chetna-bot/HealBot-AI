@@ -1,0 +1,10 @@
+{
+  "name": "HealBot AI - Smart Healthcare System",
+  "description": "An AI-powered healthcare platform featuring a symptom checker chatbot, hospital finder, and personal health records.",
+  "requestFramePermissions": [
+    "geolocation",
+    "microphone",
+    "camera",
+    "notifications"
+  ]
+}
