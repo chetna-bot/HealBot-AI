@@ -10,7 +10,6 @@ import { FindHospitals } from './pages/FindHospitals';
 import { Emergency } from './pages/Emergency';
 import { Settings } from './pages/Settings';
 import { Dashboard } from './pages/Dashboard';
-import { BookAppointment } from './pages/BookAppointment';
 import { Notifications } from './pages/Notifications';
 import { ReportAnalyzer } from './pages/ReportAnalyzer';
 import { NotificationCenter } from './components/NotificationCenter';
@@ -41,7 +40,7 @@ const Sidebar = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
     { path: '/', icon: LayoutDashboard, label: t.dashboard },
     { path: '/chatbot', icon: Bot, label: t.chatbot },
     { path: '/report-analyzer', icon: FileText, label: t.reportAnalyzer },
-    { path: '/hospitals', icon: Calendar, label: t.bookAppointment },
+    { path: '/hospitals', icon: Hospital, label: t.findHospitals },
     { path: '/notifications', icon: Bell, label: t.notifications },
     { path: '/emergency', icon: ShieldAlert, label: t.emergency },
     { path: '/settings', icon: SettingsIcon, label: t.settings },
@@ -166,7 +165,6 @@ const DashboardLayout = () => {
             <Route path="/report-analyzer" element={<ReportAnalyzer />} />
             <Route path="/hospitals" element={<FindHospitals />} />
             <Route path="/notifications" element={<Notifications />} />
-            <Route path="/book/:hospitalId" element={<BookAppointment />} />
             <Route path="/emergency" element={<Emergency />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="*" element={<Navigate to="/" replace />} />

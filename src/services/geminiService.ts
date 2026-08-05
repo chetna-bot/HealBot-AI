@@ -57,14 +57,17 @@ export const getGeminiResponse = async (
     throw new Error(serverError || MISSING_KEY_ERROR);
   }
 
-  const ai = new GoogleGenAI({ apiKey });
+  const ai = new GoogleGenAI({ 
+    apiKey,
+    httpOptions: { headers: { 'User-Agent': 'aistudio-build' } }
+  });
   const userParts: any[] = [{ text: prompt }];
   if (images && images.length > 0) {
     userParts.push(...images);
   }
 
   const response = await ai.models.generateContent({
-    model: "gemini-3-flash-preview",
+    model: "gemini-3.6-flash",
     contents: [
       ...history.map(h => ({ role: h.role, parts: h.parts })),
       { role: "user", parts: userParts }
@@ -113,7 +116,10 @@ export const searchHospitals = async (city: string, images?: ImagePart[]) => {
     throw new Error(serverError || MISSING_KEY_ERROR);
   }
 
-  const ai = new GoogleGenAI({ apiKey });
+  const ai = new GoogleGenAI({ 
+    apiKey,
+    httpOptions: { headers: { 'User-Agent': 'aistudio-build' } }
+  });
   let prompt = `Find a list of well-known, established, and registered hospitals in ${city}. 
 CRITICAL: Do NOT include any "Unknown" hospitals or institutions with missing names. ONLY include hospitals that are clearly identified and verified.
 Prioritize hospitals that are Government Registered, NABH Accredited, or JCI Accredited. 
@@ -177,7 +183,7 @@ Only include hospitals that are verified medical institutions. Avoid small unver
   }
 
   const response = await ai.models.generateContent({
-    model: "gemini-3-flash-preview",
+    model: "gemini-3.6-flash",
     contents: [{ role: "user", parts: userParts }],
     config: {
       tools: [tool],
@@ -221,7 +227,10 @@ export const analyzeMedicalReport = async (fileData: string, mimeType: string): 
     throw new Error(serverError || MISSING_KEY_ERROR);
   }
 
-  const ai = new GoogleGenAI({ apiKey });
+  const ai = new GoogleGenAI({ 
+    apiKey,
+    httpOptions: { headers: { 'User-Agent': 'aistudio-build' } }
+  });
   const prompt = `
     You are a strict Medical Document Retrieval and Grounding Specialist. Your task is to extract information from the provided medical report with ZERO hallucination.
     
@@ -260,7 +269,7 @@ export const analyzeMedicalReport = async (fileData: string, mimeType: string): 
   `;
 
   const response = await ai.models.generateContent({
-    model: "gemini-3-flash-preview",
+    model: "gemini-3.6-flash",
     contents: [{ 
       role: "user", 
       parts: [

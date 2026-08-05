@@ -1,10 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { translations } from '../translations';
-import { Search, MapPin, Phone, Calendar, CheckCircle, Hospital, ExternalLink, Loader2, Mic, MicOff, ArrowRight, Image as ImageIcon, Camera, X as CloseIcon, Sparkles, Star } from 'lucide-react';
+import { Search, MapPin, CheckCircle, Hospital, ExternalLink, Loader2, Mic, MicOff, Image as ImageIcon, Camera, X as CloseIcon, Star } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { searchHospitals } from '../services/geminiService';
-import { useNavigate } from 'react-router-dom';
 
 interface HospitalData {
   id: string;
@@ -22,7 +21,6 @@ interface HospitalData {
 export const FindHospitals: React.FC = () => {
   const { language, user } = useAuth();
   const t = translations[language];
-  const navigate = useNavigate();
   const [city, setCity] = useState('');
   const [hospitals, setHospitals] = useState<HospitalData[]>([]);
   const [geminiResponse, setGeminiResponse] = useState<string | null>(null);
@@ -389,18 +387,11 @@ export const FindHospitals: React.FC = () => {
                       href={h.mapsUri} 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="text-xs font-bold text-slate-500 hover:text-blue-600 flex items-center gap-2 transition-colors"
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-100 dark:shadow-none active:scale-95"
                     >
-                      <ExternalLink size={14} /> View Location
+                      <ExternalLink size={16} /> View Location on Maps
                     </a>
                   )}
-                  <button
-                    onClick={() => navigate(`/book/${h.id}`, { state: { hospital: h } })}
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-100 dark:shadow-none active:scale-95"
-                  >
-                    <Calendar size={16} />
-                    {t.bookAppointment}
-                  </button>
                 </div>
               </motion.div>
             ))}
@@ -415,7 +406,7 @@ export const FindHospitals: React.FC = () => {
           >
             <Hospital size={64} className="mx-auto text-slate-200 dark:text-slate-800 mb-4" />
             <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-2">Find Medical Care</h3>
-            <p className="text-slate-400 dark:text-slate-600 font-medium max-w-xs mx-auto">Search for a city to find hospitals and book an appointment instantly.</p>
+            <p className="text-slate-400 dark:text-slate-600 font-medium max-w-xs mx-auto">Search for a city to find verified hospitals and medical facilities.</p>
           </motion.div>
         )}
       </div>

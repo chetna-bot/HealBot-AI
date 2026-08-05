@@ -92,7 +92,10 @@ app.post("/api/gemini/chat", async (req, res) => {
     }
 
     const { prompt, history = [], systemInstruction = "", images = [] } = req.body;
-    const ai = new GoogleGenAI({ apiKey });
+    const ai = new GoogleGenAI({ 
+      apiKey,
+      httpOptions: { headers: { 'User-Agent': 'aistudio-build' } }
+    });
 
     const userParts: any[] = [{ text: prompt }];
     if (images && images.length > 0) {
@@ -100,7 +103,7 @@ app.post("/api/gemini/chat", async (req, res) => {
     }
 
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-3.6-flash",
       contents: [
         ...history.map((h: any) => ({ role: h.role, parts: h.parts })),
         { role: "user", parts: userParts }
@@ -128,7 +131,10 @@ app.post("/api/gemini/hospitals", async (req, res) => {
     }
 
     const { city, images = [] } = req.body;
-    const ai = new GoogleGenAI({ apiKey });
+    const ai = new GoogleGenAI({ 
+      apiKey,
+      httpOptions: { headers: { 'User-Agent': 'aistudio-build' } }
+    });
 
     let prompt = `Find a list of well-known, established, and registered hospitals in ${city}. 
 CRITICAL: Do NOT include any "Unknown" hospitals or institutions with missing names. ONLY include hospitals that are clearly identified and verified.
@@ -193,7 +199,7 @@ Only include hospitals that are verified medical institutions. Avoid small unver
     }
 
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-3.6-flash",
       contents: [{ role: "user", parts: userParts }],
       config: {
         tools: [tool],
@@ -221,7 +227,10 @@ app.post("/api/gemini/analyze-report", async (req, res) => {
     }
 
     const { fileData, mimeType } = req.body;
-    const ai = new GoogleGenAI({ apiKey });
+    const ai = new GoogleGenAI({ 
+      apiKey,
+      httpOptions: { headers: { 'User-Agent': 'aistudio-build' } }
+    });
 
     const prompt = `
       You are a strict Medical Document Retrieval and Grounding Specialist. Your task is to extract information from the provided medical report with ZERO hallucination.
@@ -261,7 +270,7 @@ app.post("/api/gemini/analyze-report", async (req, res) => {
     `;
 
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-3.6-flash",
       contents: [{ 
         role: "user", 
         parts: [
