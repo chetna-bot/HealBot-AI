@@ -6,3 +6,9 @@ coverage/
 *.log
 .env*
 !.env.example
+*.db
+*.sqlite
+*.sqlite3
+healbot.db
+.tmp/
+tmp/
