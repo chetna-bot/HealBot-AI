@@ -97,7 +97,21 @@ export const ReportAnalyzer: React.FC = () => {
     try {
       const base64 = await fileToBase64(selectedFile);
       const mimeType = getMimeType(selectedFile);
-      const analysisText = await analyzeMedicalReport(base64, mimeType);
+
+      const langMap: Record<string, string> = {
+        en: 'English',
+        hi: 'Hindi',
+        es: 'Spanish',
+        fr: 'French',
+        de: 'German',
+        zh: 'Chinese',
+        ja: 'Japanese',
+        ru: 'Russian',
+        pt: 'Portuguese'
+      };
+      const targetLang = langMap[language] || 'English';
+
+      const analysisText = await analyzeMedicalReport(base64, mimeType, targetLang);
       setCurrentAnalysis(analysisText);
 
       // Save to database
@@ -255,8 +269,8 @@ export const ReportAnalyzer: React.FC = () => {
                   )}
                 </div>
 
-                <div className="prose prose-slate dark:prose-invert max-w-none">
-                  <div className="p-6 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-700">
+                <div className="p-6 bg-slate-50 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 shadow-sm">
+                  <div className="prose prose-slate dark:prose-invert max-w-none text-slate-900 dark:text-slate-100 prose-headings:text-slate-900 dark:prose-headings:text-white prose-strong:text-slate-900 dark:prose-strong:text-white prose-p:text-slate-900 dark:prose-p:text-slate-100 prose-li:text-slate-900 dark:prose-li:text-slate-100 font-medium">
                     <ReactMarkdown>{currentAnalysis || viewingReport?.analysis || ''}</ReactMarkdown>
                   </div>
                 </div>

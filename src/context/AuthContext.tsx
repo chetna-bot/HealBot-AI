@@ -19,7 +19,7 @@ export interface User {
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string) => void;
+  login: (email: string, initialData?: Partial<User>) => void;
   logout: () => void;
   updateProfile: (data: Partial<User>) => void;
   language: Language;
@@ -86,9 +86,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [theme]);
 
-  const login = (email: string) => {
+  const login = (email: string, initialData?: Partial<User>) => {
     const existingUsers = JSON.parse(localStorage.getItem('healbot_users_db') || '{}');
-    const userData = existingUsers[email] || { email, hasCompletedProfile: false, hasAcceptedPermissions: false };
+    const baseData = existingUsers[email] || { email, hasCompletedProfile: false, hasAcceptedPermissions: false };
+    const userData = { ...baseData, ...initialData };
+    existingUsers[email] = userData;
+    localStorage.setItem('healbot_users_db', JSON.stringify(existingUsers));
     setUser(userData);
   };
 
